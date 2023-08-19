@@ -103,6 +103,11 @@ GarnetNetwork::GarnetNetwork(const Params &p)
         ni->init_net_ptr(this);
     }
 
+    m_use_wormhole = p.wormhole;
+    if (m_use_wormhole)
+        for (auto m_router: m_routers)
+            assert(m_router->get_vc_per_vnet() == 1);
+
     // Print Garnet version
     inform("Garnet version %s\n", garnetVersion);
 }
@@ -133,6 +138,8 @@ GarnetNetwork::init()
         m_num_rows = -1;
         m_num_cols = -1;
     }
+
+    m_num_routers = m_routers.size();
 
     // FaultModel: declare each router to the fault model
     if (isFaultModelEnabled()) {

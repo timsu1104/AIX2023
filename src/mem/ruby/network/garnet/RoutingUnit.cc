@@ -193,6 +193,8 @@ RoutingUnit::outportCompute(RouteInfo route, int inport,
         // any custom algorithm
         case CUSTOM_: outport =
             outportComputeCustom(route, inport, inport_dirn); break;
+        case GREEDYRING_: outport =
+            outportComputeGreedyRing(route, inport, inport_dirn); break;
         default: outport =
             lookupRoutingTable(route.vnet, route.net_dest); break;
     }
@@ -256,6 +258,37 @@ RoutingUnit::outportComputeXY(RouteInfo route,
         // already checked that in outportCompute() function
         panic("x_hops == y_hops == 0");
     }
+
+    return m_outports_dirn2idx[outport_dirn];
+}
+
+
+int
+RoutingUnit::outportComputeGreedyRing(RouteInfo route,
+                              int inport,
+                              PortDirection inport_dirn)
+{
+    int num_routers = m_router->get_net_ptr()->getNumRouters();
+    int my_id = m_router->get_id();
+    int dest_id = route.dest_router;
+
+    // if (abs(dest_id - my_id) <= num_cols/2) {
+    //     if (dest_id > my_id) {
+    //         outport_dirn = "East";
+    //     } else {
+    //         outport_dirn = "West";
+    //     }
+    // } else {
+    //     if (dest_id > my_id) {
+    //         outport_dirn = "West";
+    //     } else {
+    //         outport_dirn = "East";
+    //     }
+    // }
+
+    PortDirection outport_dirn =
+        (abs(dest_id - my_id) > num_routers / 2) ^ (dest_id > my_id) ?
+        "East" : "West";
 
     return m_outports_dirn2idx[outport_dirn];
 }

@@ -224,15 +224,22 @@ SwitchAllocator::arbitrate_outports()
                 if ((t_flit->get_type() == TAIL_) ||
                     t_flit->get_type() == HEAD_TAIL_) {
 
-                    // This Input VC should now be empty
-                    assert(!(input_unit->isReady(invc, curTick())));
+                    if (m_router->get_net_ptr()->useWormhole()) {
+                        // Send a credit back
+                        // We cannot indicate whether this VC is idle
+                        input_unit->increment_credit(invc, false, curTick());
+                    }
+                    else {
+                        // This Input VC should now be empty
+                        assert(!(input_unit->isReady(invc, curTick())));
 
-                    // Free this VC
-                    input_unit->set_vc_idle(invc, curTick());
+                        // Free this VC
+                        input_unit->set_vc_idle(invc, curTick());
 
-                    // Send a credit back
-                    // along with the information that this VC is now idle
-                    input_unit->increment_credit(invc, true, curTick());
+                        // Send a credit back
+                        // along with the information that this VC is now idle
+                        input_unit->increment_credit(invc, true, curTick());
+                    }
                 } else {
                     // Send a credit back
                     // but do not indicate that the VC is idle

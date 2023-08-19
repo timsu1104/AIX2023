@@ -118,10 +118,22 @@ def define_options(parser):
         help="""SimpleNetwork links uses a separate physical
             channel for each virtual network""",
     )
+    parser.add_argument(
+        "--wormhole",
+        action="store_true",
+        default=False,
+        help="""Wormhole flow control instead of virtual channel.""",
+    )
+    parser.add_argument(
+        "--vc-depth",
+        action="store",
+        type=int,
+        default=16,
+        help="""The depth of virtual channel.""",
+    )
 
 
 def create_network(options, ruby):
-
     # Allow legacy users to use garnet through garnet2.0 option
     # until next gem5 release.
     if options.network == "garnet2.0":
@@ -162,13 +174,16 @@ def create_network(options, ruby):
 
 
 def init_network(options, network, InterfaceClass):
-
     if options.network == "garnet":
         network.num_rows = options.mesh_rows
         network.vcs_per_vnet = options.vcs_per_vnet
         network.ni_flit_size = options.link_width_bits / 8
         network.routing_algorithm = options.routing_algorithm
         network.garnet_deadlock_threshold = options.garnet_deadlock_threshold
+        if options.wormhole:
+            assert options.vcs_per_vnet == 1, "Wormhole only support 1 VC"
+            network.wormhole = True
+            network.buffers_per_ctrl_vc = options.vc_depth
 
         # Create Bridges and connect them to the corresponding links
         for intLink in network.int_links:

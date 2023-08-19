@@ -88,7 +88,7 @@ OutputUnit::increment_credit(int out_vc)
 bool
 OutputUnit::has_credit(int out_vc)
 {
-    assert(outVcState[out_vc].isInState(ACTIVE_, curTick()));
+    // assert(outVcState[out_vc].isInState(ACTIVE_, curTick()));
     return outVcState[out_vc].has_credit();
 }
 
@@ -99,8 +99,14 @@ OutputUnit::has_free_vc(int vnet)
 {
     int vc_base = vnet*m_vc_per_vnet;
     for (int vc = vc_base; vc < vc_base + m_vc_per_vnet; vc++) {
-        if (is_vc_idle(vc, curTick()))
-            return true;
+        if (m_router->get_net_ptr()->useWormhole()) {
+            if (has_credit(vc))
+                return true;
+        }
+        else {
+            if (is_vc_idle(vc, curTick()))
+                return true;
+        }
     }
 
     return false;
@@ -112,9 +118,15 @@ OutputUnit::select_free_vc(int vnet)
 {
     int vc_base = vnet*m_vc_per_vnet;
     for (int vc = vc_base; vc < vc_base + m_vc_per_vnet; vc++) {
-        if (is_vc_idle(vc, curTick())) {
-            outVcState[vc].setState(ACTIVE_, curTick());
-            return vc;
+        if (m_router->get_net_ptr()->useWormhole()) {
+            if (has_credit(vc))
+                return vc;
+        }
+        else {
+            if (is_vc_idle(vc, curTick())) {
+                outVcState[vc].setState(ACTIVE_, curTick());
+                return vc;
+            }
         }
     }
 
